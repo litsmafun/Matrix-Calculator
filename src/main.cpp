@@ -1,0 +1,22 @@
+#include "App.h"
+#include "ConsoleUI.h"
+#include "BasicMatrixFactory.h"
+#include "BasicMatrixOperations.h"
+#include <memory>
+
+int main() {
+    // 创建用户界面组件
+    auto ui = std::make_unique<ConsoleUI>();
+
+    // 创建矩阵工厂组件
+    auto factory = std::make_unique<BasicMatrixFactory>();
+
+    // 创建矩阵运算组件
+    auto operations = std::make_unique<BasicMatrixOperations>();
+
+    // 创建并运行应用程序
+    App app(std::move(ui), std::move(factory), std::move(operations));
+    app.run();
+
+    return 0;
+}
