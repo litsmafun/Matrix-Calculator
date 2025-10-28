@@ -33,8 +33,24 @@ void ConsoleUI::showMatrix(const Matrix& matrix) {
                 // 非常大或非常小的数使用科学计数法
                 oss << std::scientific << std::setprecision(4) << val;
             } else {
-                // 普通数值使用固定小数点格式
-                oss << std::fixed << std::setprecision(4) << val;
+                // 普通数值：智能显示
+                // 检查是否为整数
+                if (std::abs(val - std::round(val)) < 1e-10) {
+                    // 是整数，不显示小数部分
+                    oss << static_cast<long long>(std::round(val));
+                } else {
+                    // 有小数部分，去除尾部的0
+                    oss << std::fixed << std::setprecision(4) << val;
+                    std::string str = oss.str();
+                    // 移除尾部的0
+                    str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+                    // 如果最后一个字符是小数点，也移除
+                    if (str.back() == '.') {
+                        str.pop_back();
+                    }
+                    oss.str("");
+                    oss << str;
+                }
             }
             
             strMatrix[i][j] = oss.str();
