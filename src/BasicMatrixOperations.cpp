@@ -8,7 +8,7 @@
 #include <map>
 
 // 矩阵加法
-Matrix* BasicMatrixOperations::add(const Matrix& a, const Matrix& b) {
+std::shared_ptr<Matrix> BasicMatrixOperations::add(const Matrix& a, const Matrix& b) {
     if (a.rows() != b.rows() || a.cols() != b.cols()) {
         throw std::invalid_argument("Matrix dimensions must match for addition");
     }
@@ -56,7 +56,7 @@ Matrix* BasicMatrixOperations::add(const Matrix& a, const Matrix& b) {
             rowPointers[i] += rowPointers[i - 1];
         }
         
-        return new SparseMatrix(values, colIndices, rowPointers, rows, cols);
+        return std::make_shared<SparseMatrix>(values, colIndices, rowPointers, rows, cols);
     }
     
     // 否则使用稠密矩阵加法
@@ -68,11 +68,11 @@ Matrix* BasicMatrixOperations::add(const Matrix& a, const Matrix& b) {
         }
     }
     
-    return new DenseMatrix(result);
+    return std::make_shared<DenseMatrix>(result);
 }
 
 // 矩阵减法
-Matrix* BasicMatrixOperations::sub(const Matrix& a, const Matrix& b) {
+std::shared_ptr<Matrix> BasicMatrixOperations::sub(const Matrix& a, const Matrix& b) {
     if (a.rows() != b.rows() || a.cols() != b.cols()) {
         throw std::invalid_argument("Matrix dimensions must match for subtraction");
     }
@@ -120,7 +120,7 @@ Matrix* BasicMatrixOperations::sub(const Matrix& a, const Matrix& b) {
             rowPointers[i] += rowPointers[i - 1];
         }
         
-        return new SparseMatrix(values, colIndices, rowPointers, rows, cols);
+        return std::make_shared<SparseMatrix>(values, colIndices, rowPointers, rows, cols);
     }
     
     // 否则使用稠密矩阵减法
@@ -132,11 +132,11 @@ Matrix* BasicMatrixOperations::sub(const Matrix& a, const Matrix& b) {
         }
     }
     
-    return new DenseMatrix(result);
+    return std::make_shared<DenseMatrix>(result);
 }
 
-// 矩阵点乘（矩阵乘法）
-Matrix* BasicMatrixOperations::dot(const Matrix& a, const Matrix& b) {
+// 矩阵/向量点乘
+std::shared_ptr<Matrix> BasicMatrixOperations::dot(const Matrix& a, const Matrix& b) {
     if (a.cols() != b.rows()) {
         throw std::invalid_argument("Matrix dimensions incompatible for multiplication");
     }
@@ -196,7 +196,7 @@ Matrix* BasicMatrixOperations::dot(const Matrix& a, const Matrix& b) {
             rowPointers[i] += rowPointers[i - 1];
         }
         
-        return new SparseMatrix(values, colIndices, rowPointers, rows, cols);
+        return std::make_shared<SparseMatrix>(values, colIndices, rowPointers, rows, cols);
     }
     // 如果只有A是稀疏矩阵
     else if (sparseA) {
@@ -213,7 +213,7 @@ Matrix* BasicMatrixOperations::dot(const Matrix& a, const Matrix& b) {
             }
         }
         
-        return new DenseMatrix(result);
+        return std::make_shared<DenseMatrix>(result);
     }
     // 如果只有B是稀疏矩阵
     else if (sparseB) {
@@ -232,7 +232,7 @@ Matrix* BasicMatrixOperations::dot(const Matrix& a, const Matrix& b) {
             }
         }
         
-        return new DenseMatrix(result);
+        return std::make_shared<DenseMatrix>(result);
     }
     
     // 两个都是稠密矩阵
@@ -248,11 +248,11 @@ Matrix* BasicMatrixOperations::dot(const Matrix& a, const Matrix& b) {
         }
     }
     
-    return new DenseMatrix(result);
+    return std::make_shared<DenseMatrix>(result);
 }
 
-// 矩阵叉乘（仅适用于3x1向量）
-Matrix* BasicMatrixOperations::cross(const Matrix& a, const Matrix& b) {
+// 向量叉乘
+std::shared_ptr<Matrix> BasicMatrixOperations::cross(const Matrix& a, const Matrix& b) {
     if (a.rows() != 3 || a.cols() != 1 || b.rows() != 3 || b.cols() != 1) {
         throw std::invalid_argument("Cross product only defined for 3x1 vectors");
     }
@@ -263,11 +263,11 @@ Matrix* BasicMatrixOperations::cross(const Matrix& a, const Matrix& b) {
     result[1][0] = a.get(2, 0) * b.get(0, 0) - a.get(0, 0) * b.get(2, 0);
     result[2][0] = a.get(0, 0) * b.get(1, 0) - a.get(1, 0) * b.get(0, 0);
     
-    return new DenseMatrix(result);
+    return std::make_shared<DenseMatrix>(result);
 }
 
 // 矩阵转置
-Matrix* BasicMatrixOperations::transpose(const Matrix& m) {
+std::shared_ptr<Matrix> BasicMatrixOperations::transpose(const Matrix& m) {
     int rows = m.rows();
     int cols = m.cols();
     
@@ -305,7 +305,7 @@ Matrix* BasicMatrixOperations::transpose(const Matrix& m) {
             rowPointers[i] += rowPointers[i - 1];
         }
         
-        return new SparseMatrix(values, colIndices, rowPointers, cols, rows);
+        return std::make_shared<SparseMatrix>(values, colIndices, rowPointers, cols, rows);
     }
     
     // 否则使用稠密矩阵转置
@@ -317,7 +317,7 @@ Matrix* BasicMatrixOperations::transpose(const Matrix& m) {
         }
     }
     
-    return new DenseMatrix(result);
+    return std::make_shared<DenseMatrix>(result);
 }
 
 // 计算行列式（使用LU分解）
@@ -374,7 +374,7 @@ double BasicMatrixOperations::determinant(const Matrix& m) {
 }
 
 // 矩阵求逆（使用高斯-约当消元法）
-Matrix* BasicMatrixOperations::inverse(const Matrix& m) {
+std::shared_ptr<Matrix> BasicMatrixOperations::inverse(const Matrix& m) {
     if (m.rows() != m.cols()) {
         throw std::invalid_argument("Inverse only defined for square matrices");
     }
@@ -438,5 +438,5 @@ Matrix* BasicMatrixOperations::inverse(const Matrix& m) {
         }
     }
     
-    return new DenseMatrix(result);
+    return std::make_shared<DenseMatrix>(result);
 }

@@ -10,15 +10,15 @@
 class App {
 private:
     std::unique_ptr<UI> ui;
-    Matrix* currentMatrix;
+    std::shared_ptr<Matrix> currentMatrix;
     std::unique_ptr<MatrixFactory> factory;
     std::unique_ptr<MatrixOperations> operations;
 
 public:
     App(std::unique_ptr<UI> ui, std::unique_ptr<MatrixFactory> factory, std::unique_ptr<MatrixOperations> operations);
-    ~App();
+    ~App() = default;
     void handleOperation(int choice);
-    void changeCurrentMatrix(Matrix* m);
+    void changeCurrentMatrix(std::shared_ptr<Matrix> m);
     void loadMatrix();
     void saveMatrix();
     void run();

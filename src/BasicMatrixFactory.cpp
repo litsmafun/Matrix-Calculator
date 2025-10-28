@@ -26,7 +26,7 @@ std::string getMatricesFolder() {
     return matricesPath.string();
 }
 
-Matrix* BasicMatrixFactory::createMatrixAuto(const std::vector<std::vector<double>>& data) {
+std::shared_ptr<Matrix> BasicMatrixFactory::createMatrixAuto(const std::vector<std::vector<double>>& data) {
     double sparsity = calculateSparsity(data);
     // 根据稀疏度决定创建稠密矩阵还是稀疏矩阵
     if (sparsity > 0.7) { // 稀疏度 > 70%，创建稀疏矩阵
@@ -52,13 +52,13 @@ Matrix* BasicMatrixFactory::createMatrixAuto(const std::vector<std::vector<doubl
             rowPointers[i] += rowPointers[i - 1];
         }
         
-        return new SparseMatrix(values, colIndices, rowPointers, rows, cols);
+        return std::make_shared<SparseMatrix>(values, colIndices, rowPointers, rows, cols);
     } else {
-        return new DenseMatrix(data);
+        return std::make_shared<DenseMatrix>(data);
     }
 }
 
-Matrix* BasicMatrixFactory::createMatrixAuto(int rows, int cols, const std::string& data) {
+std::shared_ptr<Matrix> BasicMatrixFactory::createMatrixAuto(int rows, int cols, const std::string& data) {
     // 解析字符串数据为二维向量
     std::vector<std::vector<double>> matrix(rows, std::vector<double>(cols, 0.0));
     std::istringstream iss(data);
@@ -70,7 +70,7 @@ Matrix* BasicMatrixFactory::createMatrixAuto(int rows, int cols, const std::stri
     return createMatrixAuto(matrix);
 }
 
-Matrix* BasicMatrixFactory::createMatrixAuto(const Matrix& m) {
+std::shared_ptr<Matrix> BasicMatrixFactory::createMatrixAuto(const Matrix& m) {
     // 自动判断已有矩阵是否需要转换类型
     // 尝试转换为具体类型，利用已有的转换方法
     const DenseMatrix* dense = dynamic_cast<const DenseMatrix*>(&m);
@@ -82,13 +82,13 @@ Matrix* BasicMatrixFactory::createMatrixAuto(const Matrix& m) {
         if (sparsity > 0.7) {
             // 转换为稀疏矩阵
             auto sparsePtr = dense->toSparse();
-            return new SparseMatrix(sparsePtr->getValues(), 
+            return std::make_shared<SparseMatrix>(sparsePtr->getValues(), 
                                    sparsePtr->getColIndices(), 
                                    sparsePtr->getRowPointers(), 
                                    m.rows(), m.cols());
         } else {
             // 保持稠密矩阵
-            return new DenseMatrix(dense->getData());
+            return std::make_shared<DenseMatrix>(dense->getData());
         }
     } else if (sparse) {
         // 从稀疏矩阵创建：检查稀疏度决定类型
@@ -96,10 +96,10 @@ Matrix* BasicMatrixFactory::createMatrixAuto(const Matrix& m) {
         if (sparsity <= 0.7) {
             // 转换为稠密矩阵
             auto densePtr = sparse->toDense();
-            return new DenseMatrix(densePtr->getData());
+            return std::make_shared<DenseMatrix>(densePtr->getData());
         } else {
             // 保持稀疏矩阵
-            return new SparseMatrix(sparse->getValues(), 
+            return std::make_shared<SparseMatrix>(sparse->getValues(), 
                                    sparse->getColIndices(), 
                                    sparse->getRowPointers(), 
                                    m.rows(), m.cols());
@@ -116,7 +116,7 @@ Matrix* BasicMatrixFactory::createMatrixAuto(const Matrix& m) {
     return createMatrixAuto(data);
 }
 
-Matrix* BasicMatrixFactory::loadFromFile(const std::string& filename) {
+std::shared_ptr<Matrix> BasicMatrixFactory::loadFromFile(const std::string& filename) {
     // 构建完整路径：matrices 文件夹 + 文件名
     fs::path fullPath = fs::path(getMatricesFolder()) / filename;
     
@@ -159,7 +159,7 @@ Matrix* BasicMatrixFactory::loadFromFile(const std::string& filename) {
             file >> rowPointers[i];
         }
         
-        return new SparseMatrix(values, colIndices, rowPointers, rows, cols);
+        return std::make_shared<SparseMatrix>(values, colIndices, rowPointers, rows, cols);
         
     } else if (format == "DENSE") {
         // 读取稠密矩阵
@@ -174,7 +174,7 @@ Matrix* BasicMatrixFactory::loadFromFile(const std::string& filename) {
             }
         }
         
-        return new DenseMatrix(data);
+        return std::make_shared<DenseMatrix>(data);
         
     } else {
         // 旧格式（无标记），假设为稠密矩阵
