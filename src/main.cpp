@@ -3,8 +3,17 @@
 #include "BasicMatrixFactory.h"
 #include "BasicMatrixOperations.h"
 #include <memory>
+#include <windows.h>
+#include <iostream>
 
 int main() {
+    // 设置控制台代码页为 UTF-8
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    
+    // 设置 cout 使用 UTF-8
+    std::cout.imbue(std::locale(""));
+    
     // 创建用户界面组件
     auto ui = std::make_unique<ConsoleUI>();
 

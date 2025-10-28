@@ -1,10 +1,16 @@
 #include "App.h"
 #include "Localization.h"
+#include "BasicMatrixFactory.h"
 #include <iostream>
 #include <memory>
+#include <vector>
 
 App::App(std::unique_ptr<UI> ui, std::unique_ptr<MatrixFactory> factory, std::unique_ptr<MatrixOperations> operations)
-    : ui(std::move(ui)), factory(std::move(factory)), operations(std::move(operations)) {}
+    : ui(std::move(ui)), currentMatrix(nullptr), factory(std::move(factory)), operations(std::move(operations)) {}
+
+App::~App() {
+    delete currentMatrix;
+}
 
 void App::run() {
     while (true) {
@@ -34,65 +40,174 @@ void App::run() {
 
 void App::handleOperation(int choice) {
     try {
+        Language currentLang = ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US;
+        
         switch (choice) {
-            case 1: {
-        ui->showTips(L("prompt.rows", ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US));
-        int rows = ui->getInt();
-        ui->showTips(L("prompt.cols", ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US));
-        int cols = ui->getInt();
-                std::vector<std::vector<double>> data(rows, std::vector<double>(cols));
+            case 1: { // 创建矩阵
+                ui->showTips(L("prompt.rows", currentLang));
+                int rows = ui->getInt();
+                ui->showTips(L("prompt.cols", currentLang));
+                int cols = ui->getInt();
+                std::string dataStr;
                 for (int i = 0; i < rows; ++i) {
                     for (int j = 0; j < cols; ++j) {
-            char buf[128];
-            snprintf(buf, sizeof(buf), L("prompt.element", ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US).c_str(), i, j);
-            ui->showTips(std::string(buf));
-            data[i][j] = ui->getInt(); // 简化，假设整数
+                        char buf[128];
+                        snprintf(buf, sizeof(buf), L("prompt.element", currentLang).c_str(), i, j);
+                        ui->showTips(std::string(buf));
+                        double val = ui->getInt();
+                        dataStr += std::to_string(val) + " ";
                     }
                 }
-                currentMatrix = factory->createMatrixAuto(data);
-        ui->showTips(L("msg.created", ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US));
+                delete currentMatrix;
+                currentMatrix = factory->createMatrixAuto(rows, cols, dataStr);
+                ui->showTips(L("msg.created", currentLang));
                 break;
             }
-            case 2:
+            
+            case 2: // 从文件加载矩阵
                 loadMatrix();
                 break;
-            case 3:
+                
+            case 3: // 保存当前矩阵到文件
                 saveMatrix();
                 break;
-            case 4:
+                
+            case 4: // 显示当前矩阵
                 if (currentMatrix) {
                     ui->showMatrix(*currentMatrix);
                 } else {
-                    ui->showTips("No current matrix.");
+                    ui->showTips(L("msg.invalid", currentLang));
                 }
                 break;
-            case 5: {
+                
+            case 5: { // 矩阵加法
                 if (!currentMatrix) {
-                    ui->showTips(L("msg.invalid", ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US));
+                    ui->showTips(L("msg.invalid", currentLang));
                     break;
                 }
-                ui->showTips("Enter second matrix file: ");
+                ui->showTips(L("prompt.filename", currentLang));
                 std::string filename = ui->getString();
-                auto b = factory->loadFromFile(filename);
-                currentMatrix = operations->add(*currentMatrix, *b);
-                ui->showTips(L("msg.added", ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US));
+                Matrix* b = factory->loadFromFile(filename);
+                Matrix* result = operations->add(*currentMatrix, *b);
+                delete b;
+                delete currentMatrix;
+                currentMatrix = result;
+                ui->showTips(L("msg.added", currentLang));
                 break;
             }
-            case 13: {
-                // 切换语言
+            
+            case 6: { // 矩阵减法
+                if (!currentMatrix) {
+                    ui->showTips(L("msg.invalid", currentLang));
+                    break;
+                }
+                ui->showTips(L("prompt.filename", currentLang));
+                std::string filename = ui->getString();
+                Matrix* b = factory->loadFromFile(filename);
+                Matrix* result = operations->sub(*currentMatrix, *b);
+                delete b;
+                delete currentMatrix;
+                currentMatrix = result;
+                ui->showTips(currentLang == Language::ZH_CN ? "减法完成。" : "Subtraction completed.");
+                break;
+            }
+            
+            case 7: { // 矩阵乘法
+                if (!currentMatrix) {
+                    ui->showTips(L("msg.invalid", currentLang));
+                    break;
+                }
+                ui->showTips(L("prompt.filename", currentLang));
+                std::string filename = ui->getString();
+                Matrix* b = factory->loadFromFile(filename);
+                Matrix* result = operations->dot(*currentMatrix, *b);
+                delete b;
+                delete currentMatrix;
+                currentMatrix = result;
+                ui->showTips(currentLang == Language::ZH_CN ? "乘法完成。" : "Multiplication completed.");
+                break;
+            }
+            
+            case 8: { // 矩阵转置
+                if (!currentMatrix) {
+                    ui->showTips(L("msg.invalid", currentLang));
+                    break;
+                }
+                Matrix* result = operations->transpose(*currentMatrix);
+                delete currentMatrix;
+                currentMatrix = result;
+                ui->showTips(currentLang == Language::ZH_CN ? "转置完成。" : "Transpose completed.");
+                break;
+            }
+            
+            case 9: { // 矩阵求逆
+                if (!currentMatrix) {
+                    ui->showTips(L("msg.invalid", currentLang));
+                    break;
+                }
+                Matrix* result = operations->inverse(*currentMatrix);
+                delete currentMatrix;
+                currentMatrix = result;
+                ui->showTips(currentLang == Language::ZH_CN ? "求逆完成。" : "Inverse completed.");
+                break;
+            }
+            
+            case 10: { // 行列式
+                if (!currentMatrix) {
+                    ui->showTips(L("msg.invalid", currentLang));
+                    break;
+                }
+                double det = operations->determinant(*currentMatrix);
+                ui->showTips((currentLang == Language::ZH_CN ? "行列式: " : "Determinant: ") + std::to_string(det));
+                break;
+            }
+            
+            case 11: { // 向量点积
+                if (!currentMatrix) {
+                    ui->showTips(L("msg.invalid", currentLang));
+                    break;
+                }
+                ui->showTips(L("prompt.filename", currentLang));
+                std::string filename = ui->getString();
+                Matrix* b = factory->loadFromFile(filename);
+                Matrix* result = operations->dot(*currentMatrix, *b);
+                delete b;
+                ui->showTips(currentLang == Language::ZH_CN ? "点积结果: " : "Dot product result: ");
+                ui->showMatrix(*result);
+                delete result;
+                break;
+            }
+            
+            case 12: { // 向量叉积(3D)
+                if (!currentMatrix) {
+                    ui->showTips(L("msg.invalid", currentLang));
+                    break;
+                }
+                ui->showTips(L("prompt.filename", currentLang));
+                std::string filename = ui->getString();
+                Matrix* b = factory->loadFromFile(filename);
+                Matrix* result = operations->cross(*currentMatrix, *b);
+                delete b;
+                delete currentMatrix;
+                currentMatrix = result;
+                ui->showTips(currentLang == Language::ZH_CN ? "叉积完成。" : "Cross product completed.");
+                break;
+            }
+            
+            case 13: { // 切换语言
                 int cur = ui->getLanguage();
                 int next = (cur == 0) ? 1 : 0;
                 ui->setLanguage(next);
-                // 通知用户
-                if (next == 0) ui->showTips(L("lang.switched", Language::ZH_CN));
-                else ui->showTips(L("lang.switched", Language::EN_US));
+                ui->showTips(L("lang.switched", next == 0 ? Language::ZH_CN : Language::EN_US));
                 break;
             }
-            // 类似处理其他运算
-            case 0:
+            
+            case 0: // 退出
+                ui->showTips(currentLang == Language::ZH_CN ? "再见！" : "Goodbye!");
                 break;
+                
             default:
-                ui->showTips("Invalid choice.");
+                ui->showTips(L("msg.invalid", currentLang));
         }
     } catch (const std::exception& e) {
         ui->showTips("Error: " + std::string(e.what()));
@@ -100,19 +215,22 @@ void App::handleOperation(int choice) {
 }
 
 void App::loadMatrix() {
-    ui->showTips("Enter filename: ");
+    Language currentLang = ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US;
+    ui->showTips(L("prompt.filename", currentLang));
     std::string filename = ui->getString();
+    delete currentMatrix;
     currentMatrix = factory->loadFromFile(filename);
-    ui->showTips("Matrix loaded.");
+    ui->showTips(L("msg.loaded", currentLang));
 }
 
 void App::saveMatrix() {
+    Language currentLang = ui->getLanguage() == 0 ? Language::ZH_CN : Language::EN_US;
     if (!currentMatrix) {
-        ui->showTips("No current matrix.");
+        ui->showTips(L("msg.invalid", currentLang));
         return;
     }
-    ui->showTips("Enter filename: ");
+    ui->showTips(L("prompt.filename", currentLang));
     std::string filename = ui->getString();
-    factory->saveToFile(*currentMatrix, filename);
-    ui->showTips("Matrix saved.");
+    factory->saveToFile(filename, *currentMatrix);
+    ui->showTips(L("msg.saved", currentLang));
 }

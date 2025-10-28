@@ -5,21 +5,22 @@
 #include "Matrix.h"
 #include "MatrixFactory.h"
 #include "MatrixOperations.h"
+#include <memory>
 
 class App {
 private:
-    UI* ui;
+    std::unique_ptr<UI> ui;
     Matrix* currentMatrix;
-    MatrixFactory* factory;
-    MatrixOperations* operations;
+    std::unique_ptr<MatrixFactory> factory;
+    std::unique_ptr<MatrixOperations> operations;
 
 public:
-    App(UI* ui, MatrixFactory* factory, MatrixOperations* operations);
+    App(std::unique_ptr<UI> ui, std::unique_ptr<MatrixFactory> factory, std::unique_ptr<MatrixOperations> operations);
     ~App();
     void handleOperation(int choice);
     void changeCurrentMatrix(Matrix* m);
-    Matrix* loadMatrix(int choice);
-    void saveMatrix(const Matrix& m);
+    void loadMatrix();
+    void saveMatrix();
     void run();
 };
 

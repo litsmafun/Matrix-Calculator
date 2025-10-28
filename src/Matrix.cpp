@@ -14,4 +14,3 @@ int Matrix::cols() const{
 void Matrix::set(int i,int j,double value){}
 
 
-

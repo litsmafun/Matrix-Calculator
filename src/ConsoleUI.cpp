@@ -1,4 +1,6 @@
 #include "ConsoleUI.h"
+#include "Matrix.h"
+#include <iostream>
 
 void ConsoleUI::showTips(const std::string& tips) {
     std::cout << tips << std::endl;

@@ -12,6 +12,8 @@ public:
     virtual void showMatrix(const Matrix& m) = 0;
     virtual int getInt() = 0;
     virtual std::string getString() = 0;
+    virtual int getLanguage() const = 0;
+    virtual void setLanguage(int lang) = 0;
 };
 
 #endif // UI_H
