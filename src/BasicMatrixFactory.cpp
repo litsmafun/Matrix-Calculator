@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <stdexcept>
 #include <filesystem>
@@ -216,6 +217,9 @@ void BasicMatrixFactory::saveToFile(const std::string& filename, const Matrix& m
     if (!file.is_open()) {
         throw std::runtime_error("Cannot open file: " + fullPath.string());
     }
+
+    // 设置高精度输出
+    file << std::scientific << std::setprecision(15);
     
     // 尝试转换为稀疏矩阵或稠密矩阵以确定类型
     const SparseMatrix* sparse = dynamic_cast<const SparseMatrix*>(&matrix);
