@@ -11,8 +11,13 @@ int main() {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
     
-    // 设置 cout 使用 UTF-8
-    std::cout.imbue(std::locale(""));
+    // 设置 cout 使用 UTF-8（使用 try-catch 避免 locale 错误）
+    try {
+        std::cout.imbue(std::locale(""));
+    } catch (...) {
+        // 如果设置 locale 失败，使用默认设置
+        std::cout.imbue(std::locale::classic());
+    }
     
     // 创建用户界面组件
     auto ui = std::make_unique<ConsoleUI>();
