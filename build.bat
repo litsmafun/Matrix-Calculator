@@ -37,8 +37,8 @@ g++ -std=c++17 -Wall -Wextra -Iinclude -c src/main.cpp -o build/main.o
 if errorlevel 1 goto error
 
 REM 链接所有目标文件
-echo 正在链接...
-g++ build/Matrix.o build/DenseMatrix.o build/SparseMatrix.o build/BasicMatrixOperations.o build/BasicMatrixFactory.o build/ConsoleUI.o build/App.o build/Localization.o build/main.o -o build/MatrixCalculator.exe
+echo 正在链接（静态链接）...
+g++ build/Matrix.o build/DenseMatrix.o build/SparseMatrix.o build/BasicMatrixOperations.o build/BasicMatrixFactory.o build/ConsoleUI.o build/App.o build/Localization.o build/main.o -static -static-libgcc -static-libstdc++ -o build/MatrixCalculator.exe
 if errorlevel 1 goto error
 
 echo.

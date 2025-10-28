@@ -11,6 +11,7 @@ if (-not (Test-Path "build")) {
 # 设置编译器和编译选项
 $CXX = "g++"
 $CXXFLAGS = "-std=c++17 -Wall -Wextra -Iinclude"
+$LDFLAGS = "-static -static-libgcc -static-libstdc++"
 $SRCDIR = "src"
 $BUILDDIR = "build"
 $TARGET = "MatrixCalculator.exe"
@@ -37,9 +38,9 @@ foreach ($src in $sources) {
 }
 
 # 链接所有目标文件
-Write-Host "正在链接..." -ForegroundColor Cyan
+Write-Host "正在链接（静态链接）..." -ForegroundColor Cyan
 $targetPath = Join-Path $BUILDDIR $TARGET
-& $CXX $objects -o $targetPath
+& $CXX $objects $LDFLAGS.Split() -o $targetPath
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "编译成功! 可执行文件: $targetPath" -ForegroundColor Green

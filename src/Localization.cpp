@@ -30,7 +30,7 @@ static const Map zh_cn = {
     {"msg.invalid", "无效选择。"},
     {"msg.error", "错误: %s"},
     {"lang.chosen", "当前语言: 中文(简体)"},
-    {"lang.switched", "语言已切换为: %s"}
+    {"lang.switched", "语言已切换为: 中文"}
 };
 
 static const Map en_us = {
@@ -61,7 +61,7 @@ static const Map en_us = {
     {"msg.invalid", "Invalid choice."},
     {"msg.error", "Error: %s"},
     {"lang.chosen", "Current language: English"},
-    {"lang.switched", "Language switched to: %s"}
+    {"lang.switched", "Language switched to: English"}
 };
 
 std::string L(const std::string& key, Language lang) {

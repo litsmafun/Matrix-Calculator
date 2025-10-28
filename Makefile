@@ -3,6 +3,7 @@
 # 编译器设置
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
+LDFLAGS = -static -static-libgcc -static-libstdc++
 
 # 目录设置
 SRCDIR = src
@@ -25,8 +26,8 @@ $(BUILDDIR):
 
 # 链接目标文件
 $(TARGET): $(BUILDDIR) $(OBJECTS)
-	@echo 正在链接...
-	$(CXX) $(OBJECTS) -o $(TARGET)
+	@echo 正在链接（静态链接）...
+	$(CXX) $(OBJECTS) $(LDFLAGS) -o $(TARGET)
 	@echo 编译成功! 可执行文件: $(TARGET)
 
 # 编译源文件

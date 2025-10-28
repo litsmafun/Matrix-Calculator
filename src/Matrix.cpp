@@ -11,6 +11,8 @@ int Matrix::cols() const{
     return col;
 }
 
-void Matrix::set(int i,int j,double value){}
+void Matrix::set(int i,int j,double value){
+    (void)i; (void)j; (void)value;
+}
 
 

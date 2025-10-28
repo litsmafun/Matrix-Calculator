@@ -16,22 +16,32 @@ void App::run() {
     while (true) {
         // 根据UI的语言显示本地化菜单
         int lang = ui->getLanguage();
-        ui->showTips(L("menu.title", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.create", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.load", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.save", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.display", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.add", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.sub", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.mul", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.transpose", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.inverse", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.det", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.dot", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.cross", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.lang", lang == 0 ? Language::ZH_CN : Language::EN_US));
-        ui->showTips(L("menu.exit", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        
+        // 顶部边框
+        ui->showTips("============================================");
+        ui->showTips("||  " + L("menu.title", lang == 0 ? Language::ZH_CN : Language::EN_US) + "  ||");
+        ui->showTips("============================================");
+        
+        // 菜单选项
+        ui->showTips("|| " + L("menu.create", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.load", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.save", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.display", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.add", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.sub", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.mul", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.transpose", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.inverse", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.det", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.dot", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.cross", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.lang", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        ui->showTips("|| " + L("menu.exit", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        
+        // 底部边框
+        ui->showTips("============================================");
         ui->showTips(L("prompt.choose", lang == 0 ? Language::ZH_CN : Language::EN_US));
+        
         int choice = ui->getInt();
         handleOperation(choice);
         if (choice == 0) break;
@@ -91,7 +101,9 @@ void App::handleOperation(int choice) {
                 Matrix* result = operations->add(*currentMatrix, *b);
                 delete b;
                 delete currentMatrix;
-                currentMatrix = result;
+                // 自动判断结果矩阵是否需要转换类型
+                currentMatrix = factory->createMatrixAuto(*result);
+                delete result;
                 ui->showTips(L("msg.added", currentLang));
                 break;
             }
@@ -107,7 +119,9 @@ void App::handleOperation(int choice) {
                 Matrix* result = operations->sub(*currentMatrix, *b);
                 delete b;
                 delete currentMatrix;
-                currentMatrix = result;
+                // 自动判断结果矩阵是否需要转换类型
+                currentMatrix = factory->createMatrixAuto(*result);
+                delete result;
                 ui->showTips(currentLang == Language::ZH_CN ? "减法完成。" : "Subtraction completed.");
                 break;
             }
@@ -123,7 +137,9 @@ void App::handleOperation(int choice) {
                 Matrix* result = operations->dot(*currentMatrix, *b);
                 delete b;
                 delete currentMatrix;
-                currentMatrix = result;
+                // 自动判断结果矩阵是否需要转换类型
+                currentMatrix = factory->createMatrixAuto(*result);
+                delete result;
                 ui->showTips(currentLang == Language::ZH_CN ? "乘法完成。" : "Multiplication completed.");
                 break;
             }
@@ -135,7 +151,9 @@ void App::handleOperation(int choice) {
                 }
                 Matrix* result = operations->transpose(*currentMatrix);
                 delete currentMatrix;
-                currentMatrix = result;
+                // 自动判断结果矩阵是否需要转换类型
+                currentMatrix = factory->createMatrixAuto(*result);
+                delete result;
                 ui->showTips(currentLang == Language::ZH_CN ? "转置完成。" : "Transpose completed.");
                 break;
             }
@@ -147,7 +165,9 @@ void App::handleOperation(int choice) {
                 }
                 Matrix* result = operations->inverse(*currentMatrix);
                 delete currentMatrix;
-                currentMatrix = result;
+                // 自动判断结果矩阵是否需要转换类型
+                currentMatrix = factory->createMatrixAuto(*result);
+                delete result;
                 ui->showTips(currentLang == Language::ZH_CN ? "求逆完成。" : "Inverse completed.");
                 break;
             }
@@ -189,7 +209,9 @@ void App::handleOperation(int choice) {
                 Matrix* result = operations->cross(*currentMatrix, *b);
                 delete b;
                 delete currentMatrix;
-                currentMatrix = result;
+                // 自动判断结果矩阵是否需要转换类型
+                currentMatrix = factory->createMatrixAuto(*result);
+                delete result;
                 ui->showTips(currentLang == Language::ZH_CN ? "叉积完成。" : "Cross product completed.");
                 break;
             }
