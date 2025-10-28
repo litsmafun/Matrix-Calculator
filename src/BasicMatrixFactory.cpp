@@ -14,9 +14,9 @@ namespace fs = std::filesystem;
 
 // 获取 exe 所在目录的 matrices 文件夹路径
 std::string getMatricesFolder() {
-    char buffer[MAX_PATH];
-    GetModuleFileNameA(NULL, buffer, MAX_PATH);
-    fs::path exePath(buffer);
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileNameW(NULL, buffer, MAX_PATH);  // 使用宽字符版本
+    fs::path exePath(buffer);  // std::filesystem::path 可以直接接受宽字符
     fs::path matricesPath = exePath.parent_path() / "matrices";
     
     // 如果文件夹不存在，创建它
@@ -24,7 +24,8 @@ std::string getMatricesFolder() {
         fs::create_directories(matricesPath);
     }
     
-    return matricesPath.string();
+    // 返回 UTF-8 字符串
+    return matricesPath.u8string();
 }
 
 std::shared_ptr<Matrix> BasicMatrixFactory::createMatrixAuto(const std::vector<std::vector<double>>& data) {
@@ -119,11 +120,14 @@ std::shared_ptr<Matrix> BasicMatrixFactory::createMatrixAuto(const Matrix& m) {
 
 std::shared_ptr<Matrix> BasicMatrixFactory::loadFromFile(const std::string& filename) {
     // 构建完整路径：matrices 文件夹 + 文件名
-    fs::path fullPath = fs::path(getMatricesFolder()) / filename;
+    // 先将 UTF-8 字符串转换为 path 对象
+    fs::path matricesFolder = fs::u8path(getMatricesFolder());
+    fs::path fullPath = matricesFolder / fs::u8path(filename);
     
-    std::ifstream file(fullPath);
+    // 使用 path 对象直接打开文件，支持中文路径
+    std::ifstream file(fullPath, std::ios::in);
     if (!file.is_open()) {
-        throw std::runtime_error("Cannot open file: " + fullPath.string());
+        throw std::runtime_error("Cannot open file: " + fullPath.u8string());
     }
     
     std::string format;
@@ -211,11 +215,14 @@ std::shared_ptr<Matrix> BasicMatrixFactory::loadFromFile(const std::string& file
 
 void BasicMatrixFactory::saveToFile(const std::string& filename, const Matrix& matrix) {
     // 构建完整路径：matrices 文件夹 + 文件名
-    fs::path fullPath = fs::path(getMatricesFolder()) / filename;
+    // 先将 UTF-8 字符串转换为 path 对象
+    fs::path matricesFolder = fs::u8path(getMatricesFolder());
+    fs::path fullPath = matricesFolder / fs::u8path(filename);
     
-    std::ofstream file(fullPath);
+    // 使用 path 对象直接打开文件，支持中文路径
+    std::ofstream file(fullPath, std::ios::out);
     if (!file.is_open()) {
-        throw std::runtime_error("Cannot open file: " + fullPath.string());
+        throw std::runtime_error("Cannot open file: " + fullPath.u8string());
     }
 
     // 设置高精度输出
