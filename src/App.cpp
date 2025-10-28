@@ -54,7 +54,7 @@ void App::handleOperation(int choice) {
                         char buf[128];
                         snprintf(buf, sizeof(buf), L("prompt.element", currentLang).c_str(), i, j);
                         ui->showTips(std::string(buf));
-                        double val = ui->getInt();
+                        double val = ui->getDouble();
                         dataStr += std::to_string(val) + " ";
                     }
                 }

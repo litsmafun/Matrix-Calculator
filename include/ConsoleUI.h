@@ -12,6 +12,7 @@ public:
     void showTips(const std::string& tips) override;
     void showMatrix(const Matrix& m) override;
     int getInt() override;
+    double getDouble() override;
     std::string getString() override;
     int getLanguage() const override;
     void setLanguage(int lang) override;
