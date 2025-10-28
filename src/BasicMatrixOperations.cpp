@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <memory>
+#include <map>
 
 // 矩阵加法
 Matrix* BasicMatrixOperations::add(const Matrix& a, const Matrix& b) {
@@ -14,6 +15,51 @@ Matrix* BasicMatrixOperations::add(const Matrix& a, const Matrix& b) {
     
     int rows = a.rows();
     int cols = a.cols();
+    
+    // 尝试转换为稀疏矩阵
+    const SparseMatrix* sparseA = dynamic_cast<const SparseMatrix*>(&a);
+    const SparseMatrix* sparseB = dynamic_cast<const SparseMatrix*>(&b);
+    
+    // 如果两个都是稀疏矩阵，使用稀疏矩阵加法
+    if (sparseA && sparseB) {
+        std::vector<double> values;
+        std::vector<int> colIndices;
+        std::vector<int> rowPointers(rows + 1, 0);
+        
+        for (int i = 0; i < rows; ++i) {
+            std::map<int, double> rowMap;
+            
+            // 添加矩阵A的元素
+            for (int idx = sparseA->getRowPointers()[i]; idx < sparseA->getRowPointers()[i + 1]; ++idx) {
+                int j = sparseA->getColIndices()[idx];
+                rowMap[j] = sparseA->getValues()[idx];
+            }
+            
+            // 添加矩阵B的元素
+            for (int idx = sparseB->getRowPointers()[i]; idx < sparseB->getRowPointers()[i + 1]; ++idx) {
+                int j = sparseB->getColIndices()[idx];
+                rowMap[j] += sparseB->getValues()[idx];
+            }
+            
+            // 构建结果行
+            for (const auto& pair : rowMap) {
+                if (std::abs(pair.second) > 1e-10) {
+                    values.push_back(pair.second);
+                    colIndices.push_back(pair.first);
+                    rowPointers[i + 1]++;
+                }
+            }
+        }
+        
+        // 累积行指针
+        for (int i = 1; i <= rows; ++i) {
+            rowPointers[i] += rowPointers[i - 1];
+        }
+        
+        return new SparseMatrix(values, colIndices, rowPointers, rows, cols);
+    }
+    
+    // 否则使用稠密矩阵加法
     std::vector<std::vector<double>> result(rows, std::vector<double>(cols));
     
     for (int i = 0; i < rows; ++i) {
@@ -33,6 +79,51 @@ Matrix* BasicMatrixOperations::sub(const Matrix& a, const Matrix& b) {
     
     int rows = a.rows();
     int cols = a.cols();
+    
+    // 尝试转换为稀疏矩阵
+    const SparseMatrix* sparseA = dynamic_cast<const SparseMatrix*>(&a);
+    const SparseMatrix* sparseB = dynamic_cast<const SparseMatrix*>(&b);
+    
+    // 如果两个都是稀疏矩阵，使用稀疏矩阵减法
+    if (sparseA && sparseB) {
+        std::vector<double> values;
+        std::vector<int> colIndices;
+        std::vector<int> rowPointers(rows + 1, 0);
+        
+        for (int i = 0; i < rows; ++i) {
+            std::map<int, double> rowMap;
+            
+            // 添加矩阵A的元素
+            for (int idx = sparseA->getRowPointers()[i]; idx < sparseA->getRowPointers()[i + 1]; ++idx) {
+                int j = sparseA->getColIndices()[idx];
+                rowMap[j] = sparseA->getValues()[idx];
+            }
+            
+            // 减去矩阵B的元素
+            for (int idx = sparseB->getRowPointers()[i]; idx < sparseB->getRowPointers()[i + 1]; ++idx) {
+                int j = sparseB->getColIndices()[idx];
+                rowMap[j] -= sparseB->getValues()[idx];
+            }
+            
+            // 构建结果行
+            for (const auto& pair : rowMap) {
+                if (std::abs(pair.second) > 1e-10) {
+                    values.push_back(pair.second);
+                    colIndices.push_back(pair.first);
+                    rowPointers[i + 1]++;
+                }
+            }
+        }
+        
+        // 累积行指针
+        for (int i = 1; i <= rows; ++i) {
+            rowPointers[i] += rowPointers[i - 1];
+        }
+        
+        return new SparseMatrix(values, colIndices, rowPointers, rows, cols);
+    }
+    
+    // 否则使用稠密矩阵减法
     std::vector<std::vector<double>> result(rows, std::vector<double>(cols));
     
     for (int i = 0; i < rows; ++i) {
@@ -53,6 +144,98 @@ Matrix* BasicMatrixOperations::dot(const Matrix& a, const Matrix& b) {
     int rows = a.rows();
     int cols = b.cols();
     int inner = a.cols();
+    
+    // 尝试转换为稀疏矩阵
+    const SparseMatrix* sparseA = dynamic_cast<const SparseMatrix*>(&a);
+    const SparseMatrix* sparseB = dynamic_cast<const SparseMatrix*>(&b);
+    
+    // 如果两个都是稀疏矩阵，使用稀疏矩阵乘法
+    if (sparseA && sparseB) {
+        std::vector<double> values;
+        std::vector<int> colIndices;
+        std::vector<int> rowPointers(rows + 1, 0);
+        
+        // 转置矩阵B以便更高效地访问列
+        std::vector<std::vector<std::pair<int, double>>> bCols(cols);
+        for (int i = 0; i < b.rows(); ++i) {
+            for (int idx = sparseB->getRowPointers()[i]; idx < sparseB->getRowPointers()[i + 1]; ++idx) {
+                int j = sparseB->getColIndices()[idx];
+                double val = sparseB->getValues()[idx];
+                bCols[j].push_back({i, val});
+            }
+        }
+        
+        for (int i = 0; i < rows; ++i) {
+            std::map<int, double> rowMap;
+            
+            // 遍历A的第i行的非零元素
+            for (int idxA = sparseA->getRowPointers()[i]; idxA < sparseA->getRowPointers()[i + 1]; ++idxA) {
+                int k = sparseA->getColIndices()[idxA];
+                double valA = sparseA->getValues()[idxA];
+                
+                // 遍历B的第k行的非零元素
+                for (int idxB = sparseB->getRowPointers()[k]; idxB < sparseB->getRowPointers()[k + 1]; ++idxB) {
+                    int j = sparseB->getColIndices()[idxB];
+                    double valB = sparseB->getValues()[idxB];
+                    rowMap[j] += valA * valB;
+                }
+            }
+            
+            // 构建结果行
+            for (const auto& pair : rowMap) {
+                if (std::abs(pair.second) > 1e-10) {
+                    values.push_back(pair.second);
+                    colIndices.push_back(pair.first);
+                    rowPointers[i + 1]++;
+                }
+            }
+        }
+        
+        // 累积行指针
+        for (int i = 1; i <= rows; ++i) {
+            rowPointers[i] += rowPointers[i - 1];
+        }
+        
+        return new SparseMatrix(values, colIndices, rowPointers, rows, cols);
+    }
+    // 如果只有A是稀疏矩阵
+    else if (sparseA) {
+        std::vector<std::vector<double>> result(rows, std::vector<double>(cols, 0.0));
+        
+        for (int i = 0; i < rows; ++i) {
+            for (int idx = sparseA->getRowPointers()[i]; idx < sparseA->getRowPointers()[i + 1]; ++idx) {
+                int k = sparseA->getColIndices()[idx];
+                double valA = sparseA->getValues()[idx];
+                
+                for (int j = 0; j < cols; ++j) {
+                    result[i][j] += valA * b.get(k, j);
+                }
+            }
+        }
+        
+        return new DenseMatrix(result);
+    }
+    // 如果只有B是稀疏矩阵
+    else if (sparseB) {
+        std::vector<std::vector<double>> result(rows, std::vector<double>(cols, 0.0));
+        
+        for (int i = 0; i < rows; ++i) {
+            for (int k = 0; k < inner; ++k) {
+                double valA = a.get(i, k);
+                if (std::abs(valA) > 1e-10) {
+                    for (int idx = sparseB->getRowPointers()[k]; idx < sparseB->getRowPointers()[k + 1]; ++idx) {
+                        int j = sparseB->getColIndices()[idx];
+                        double valB = sparseB->getValues()[idx];
+                        result[i][j] += valA * valB;
+                    }
+                }
+            }
+        }
+        
+        return new DenseMatrix(result);
+    }
+    
+    // 两个都是稠密矩阵
     std::vector<std::vector<double>> result(rows, std::vector<double>(cols, 0.0));
     
     for (int i = 0; i < rows; ++i) {
@@ -87,6 +270,45 @@ Matrix* BasicMatrixOperations::cross(const Matrix& a, const Matrix& b) {
 Matrix* BasicMatrixOperations::transpose(const Matrix& m) {
     int rows = m.rows();
     int cols = m.cols();
+    
+    // 尝试转换为稀疏矩阵
+    const SparseMatrix* sparse = dynamic_cast<const SparseMatrix*>(&m);
+    
+    // 如果是稀疏矩阵，使用稀疏矩阵转置
+    if (sparse) {
+        std::vector<std::vector<std::pair<int, double>>> tempCols(cols);
+        
+        // 收集每列的元素
+        for (int i = 0; i < rows; ++i) {
+            for (int idx = sparse->getRowPointers()[i]; idx < sparse->getRowPointers()[i + 1]; ++idx) {
+                int j = sparse->getColIndices()[idx];
+                double val = sparse->getValues()[idx];
+                tempCols[j].push_back({i, val});
+            }
+        }
+        
+        // 构建转置后的CSR格式
+        std::vector<double> values;
+        std::vector<int> colIndices;
+        std::vector<int> rowPointers(cols + 1, 0);
+        
+        for (int j = 0; j < cols; ++j) {
+            for (const auto& pair : tempCols[j]) {
+                values.push_back(pair.second);
+                colIndices.push_back(pair.first);
+                rowPointers[j + 1]++;
+            }
+        }
+        
+        // 累积行指针
+        for (int i = 1; i <= cols; ++i) {
+            rowPointers[i] += rowPointers[i - 1];
+        }
+        
+        return new SparseMatrix(values, colIndices, rowPointers, cols, rows);
+    }
+    
+    // 否则使用稠密矩阵转置
     std::vector<std::vector<double>> result(cols, std::vector<double>(rows));
     
     for (int i = 0; i < rows; ++i) {
