@@ -1,5 +1,6 @@
 #include "ConsoleUI.h"
 #include "Matrix.h"
+#include "SparseMatrix.h"
 #include <iostream>
 #include <iomanip>
 #include <limits>
@@ -71,6 +72,13 @@ void ConsoleUI::showMatrix(const Matrix& matrix) {
         std::cout << std::endl;
     }
     std::cout << std::endl;
+    const SparseMatrix* sparse = dynamic_cast<const SparseMatrix*>(&matrix);
+    if(sparse){
+        std::cout<<(currentLang==0 ? "（稀疏矩阵）" : "(Sparse Matrix)")<<std::endl;
+    }
+    else{
+        std::cout<<(currentLang==0 ? "（稠密矩阵）" : "(Dense Matrix)")<<std::endl;
+    }
 }
 
 int ConsoleUI::getInt() {
