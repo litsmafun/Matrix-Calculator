@@ -274,6 +274,7 @@ void BasicMatrixFactory::saveToFile(const std::string& filename, const Matrix& m
 }
 
 double BasicMatrixFactory::calculateSparsity(const std::vector<std::vector<double>>& data) {
+    //还未创建矩阵时没有nnz，只能通过数据计算稀疏度
     if (data.empty()) return 0.0;
     int total = data.size() * data[0].size();
     int zeroCount = 0;
